@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+:root {
+  /* ── Brand ── */
+  --accent:         #C0392B;
+  --accent-light:   #FDECEA;
+  --accent-border:  #F5C6BF;
+
+  /* ── Backgrounds ── */
+  --bg-page:        #FAF5F0;
+  --bg-surface:     #FFFFFF;
+  --bg-elevated:    #FFFFFF;
+
+  /* ── Borders ── */
+  --border:         #E8E0D8;
+  --border-strong:  #D4C8BE;
+
+  /* ── Ink ── */
+  --ink-primary:    #111111;
+  --ink-secondary:  #555555;
+  --ink-muted:      #999999;
+  --ink-placeholder:#BBBBBB;
+
+  /* ── Status ── */
+  --status-pending-bg:    #F5F5F5;
+  --status-pending-text:  #777777;
+  --status-active-bg:     #EFF6FF;
+  --status-active-text:   #1D6FCC;
+  --status-progress-bg:   #FEF3C7;
+  --status-progress-text: #B45309;
+  --status-done-bg:       #F0FDF4;
+  --status-done-text:     #15803D;
+  --status-cancelled-bg:  #FEF2F2;
+  --status-cancelled-text:#C0392B;
+  --status-disputed-bg:   #FFF1F2;
+  --status-disputed-text: #BE123C;
+
+  /* ── Semantic ── */
+  --success:        #15803D;
+  --success-bg:     #F0FDF4;
+  --success-border: #BBF7D0;
+  --warning:        #B45309;
+  --warning-bg:     #FEF3C7;
+  --danger:         #C0392B;
+  --danger-bg:      #FEF2F2;
+  --info:           #1D6FCC;
+  --info-bg:        #EFF6FF;
+
+  /* ── Avatar ── */
+  --avatar-bg:      #FEF0EE;
+  --avatar-border:  #F5C6BF;
+  --avatar-text:    #C0392B;
+
+  /* ── Image placeholder ── */
+  --img-placeholder: #F0E8E0;
+
+  /* ── Skeleton ── */
+  --skeleton:       #E8E0D8;
+
+  /* ── Radius Scale ── */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-pill: 999px;
+
+  /* ── Typography Scale ── */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-lg:   17px;
+  --text-xl:   22px;
+  --text-2xl:  28px;
+
+  /* ── Spacing Scale ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* ── Layout ── */
+  --nav-height:    52px;
+  --bottom-nav:    64px;
+  --max-width:     430px;
+}
+
+[data-theme="dark"] {
+  --accent:         #E05A4B;
+  --accent-light:   #3D1A17;
+  --accent-border:  #5C2520;
+
+  --bg-page:        #0F0F0F;
+  --bg-surface:     #1A1A1A;
+  --bg-elevated:    #222222;
+
+  --border:         #2E2E2E;
+  --border-strong:  #3A3A3A;
+
+  --ink-primary:    #F5F5F5;
+  --ink-secondary:  #AAAAAA;
+  --ink-muted:      #666666;
+  --ink-placeholder:#444444;
+
+  --status-pending-bg:    #1F1F1F;
+  --status-pending-text:  #888888;
+  --status-active-bg:     #0D1F33;
+  --status-active-text:   #60A5FA;
+  --status-progress-bg:   #2A1F00;
+  --status-progress-text: #FCD34D;
+  --status-done-bg:       #052e16;
+  --status-done-text:     #4ADE80;
+  --status-cancelled-bg:  #2D0A0A;
+  --status-cancelled-text:#F87171;
+  --status-disputed-bg:   #2D0A14;
+  --status-disputed-text: #FB7185;
+
+  --success:        #4ADE80;
+  --success-bg:     #052e16;
+  --success-border: #166534;
+  --warning:        #FCD34D;
+  --warning-bg:     #2A1F00;
+  --danger:         #F87171;
+  --danger-bg:      #2D0A0A;
+  --info:           #60A5FA;
+  --info-bg:        #0D1F33;
+
+  --avatar-bg:      #2D1A18;
+  --avatar-border:  #5C2520;
+  --avatar-text:    #E05A4B;
+
+  --img-placeholder: #2A2A2A;
+  --skeleton:        #2A2A2A;
+
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Cairo', sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-page);
+  color: var(--ink-primary);
+  font-family: 'Cairo', sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s, color 0.2s;
+}
+
+button, input, textarea, select {
+  font-family: 'Cairo', sans-serif;
+}
+
+input, textarea, select {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+input[type="number"],
+input[type="tel"],
+input[inputmode="numeric"],
+input[inputmode="tel"],
+input[inputmode="decimal"] {
+  direction: ltr;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ── Animations ── */
+@keyframes hirfa-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+@keyframes hirfa-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hirfa-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hirfa-slideup {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ── Utilities ── */
+.hirfa-spin {
+  animation: hirfa-spin 0.8s linear infinite;
+}
+
+.hirfa-fadein {
+  animation: hirfa-fadein 0.2s ease-out forwards;
+}
+
+.hirfa-slideup {
+  animation: hirfa-slideup 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ── Scrollbar hide ── */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
