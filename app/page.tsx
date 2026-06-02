@@ -7,7 +7,7 @@ import {
   MessageSquare, Users, CheckCircle2, ChevronLeft,
   Star, Link, AtSign,
 } from 'lucide-react'
-import { useTranslation } from '@/lib/theme'
+import { useTranslation, useAppSettings } from '@/lib/theme'
 
 const CRAFTS = ['خط عربي', 'رسم', 'فخار', 'كروشيه', 'نحت', 'نسيج']
 
@@ -27,14 +27,15 @@ const STEPS = [
 ]
 
 const STATS = [
-  { value: '٥٠+',  label: 'فنان ومبدع' },
-  { value: '٢٠٠+', label: 'طلب أُنجز'   },
-  { value: '٤.٩',  label: 'متوسط التقييم' },
+  { raw: 50,  suffix: '+', label: 'فنان ومبدع',    labelEn: 'Artists'       },
+  { raw: 200, suffix: '+', label: 'طلب أُنجز',      labelEn: 'Orders Done'   },
+  { raw: 4.9, suffix: '',  label: 'متوسط التقييم',  labelEn: 'Avg Rating'    },
 ]
 
 export default function LandingPage() {
   const router = useRouter()
   const t = useTranslation()
+  const { lang } = useAppSettings()
   const [craftIndex, setCraftIndex] = useState(0)
   const [craftVisible, setCraftVisible] = useState(true)
 
@@ -260,7 +261,9 @@ export default function LandingPage() {
               margin: '0 0 36px', maxWidth: 300,
               animation: 'lp-fade-up 0.7s cubic-bezier(.22,1,.36,1) 0.4s both',
             }}>
-              {t('landing.desc')}
+              {lang === 'en'
+                ? 'Connect with top craftspeople. Order unique handmade art with ease.'
+                : 'تواصل مع أفضل الفنانين والحرفيين. اطلب أعمالاً يدوية فريدة بكل سهولة.'}
             </p>
 
             {/* Stats row */}
@@ -268,13 +271,13 @@ export default function LandingPage() {
               display: 'flex', gap: 28, marginBottom: 44,
               animation: 'lp-fade-up 0.7s cubic-bezier(.22,1,.36,1) 0.5s both',
             }}>
-              {STATS.map(({ value, label }) => (
+              {STATS.map(({ raw, suffix, label, labelEn }) => (
                 <div key={label}>
-                  <p style={{ fontSize: 22, fontWeight: 800, color: '#F5F0EB', margin: '0 0 2px' }}>
-                    {value}
+                  <p style={{ fontSize: 22, fontWeight: 800, color: '#F5F0EB', margin: '0 0 2px', direction: 'ltr', textAlign: 'right' }}>
+                    {raw.toLocaleString('en-US')}{suffix}
                   </p>
                   <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0, letterSpacing: 0.3 }}>
-                    {label}
+                    {lang === 'en' ? labelEn : label}
                   </p>
                 </div>
               ))}
@@ -481,7 +484,7 @@ export default function LandingPage() {
             display: 'flex', flexDirection: 'column', gap: 0,
             position: 'relative', zIndex: 1,
           }}>
-            {STATS.map(({ value, label }, i) => (
+            {STATS.map(({ raw, suffix, label, labelEn }, i) => (
               <div
                 key={label}
                 className={`lp-watch lp-d${i + 1}`}
@@ -494,12 +497,12 @@ export default function LandingPage() {
                 <p style={{
                   fontSize: 52, fontWeight: 900, color: 'var(--accent)',
                   margin: 0, lineHeight: 1, letterSpacing: -1,
-                  fontVariantNumeric: 'tabular-nums',
+                  direction: 'ltr', fontVariantNumeric: 'tabular-nums',
                 }}>
-                  {value}
+                  {raw.toLocaleString('en-US')}{suffix}
                 </p>
                 <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', margin: 0, textAlign: 'left' }}>
-                  {label}
+                  {lang === 'en' ? labelEn : label}
                 </p>
               </div>
             ))}
