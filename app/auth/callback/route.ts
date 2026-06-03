@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
 
   const cookieStore = await cookies()
 
+  // Collect cookies set by Supabase so we can stamp them onto the redirect response.
+  // cookieStore.set() only mutates the request-scoped store; NextResponse.redirect()
+  // creates a fresh response that never receives those writes unless we do this.
+  const pendingCookies: { name: string; value: string; options: Record<string, unknown> }[] = []
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,77 +24,62 @@ export async function GET(request: NextRequest) {
       cookies: {
         getAll: () => cookieStore.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
+          cookiesToSet.forEach(c => pendingCookies.push(c))
         },
       },
     }
   )
 
+  function redirect(url: string) {
+    const res = NextResponse.redirect(url)
+    pendingCookies.forEach(({ name, value, options }) =>
+      res.cookies.set(name, value, options as any)
+    )
+    return res
+  }
+
   if (!code) {
     if (token_hash && type) {
       const { error } = await supabase.auth.verifyOtp({ token_hash, type: type as any })
-      if (error) {
-        return NextResponse.redirect(`${errorBase}?error=link_expired`)
-      }
+      if (error) return redirect(`${errorBase}?error=link_expired`)
     } else {
-      return NextResponse.redirect(`${errorBase}?error=no_code`)
+      return redirect(`${errorBase}?error=no_code`)
     }
   } else {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (error) {
-      return NextResponse.redirect(`${errorBase}?error=invalid_link`)
-    }
+    if (error) return redirect(`${errorBase}?error=invalid_link`)
   }
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (user) {
-    const name = (user.user_metadata?.name as string | undefined)
-      ?? user.email?.split('@')[0]
-      ?? 'مستخدم'
+  if (!user) return redirect(`${errorBase}?error=no_session`)
 
-    // Use the role from magic-link metadata so artists don't get inserted as 'client'.
-    // ignoreDuplicates: true — never overwrites an existing row's role (protects admins).
-    const metaRole = (user.user_metadata?.role as string | undefined) ?? roleHint
-    const roleToInsert = metaRole === 'artist' ? 'artist' : metaRole === 'admin' ? 'admin' : 'client'
+  const name = (user.user_metadata?.name as string | undefined)
+    ?? user.email?.split('@')[0]
+    ?? 'مستخدم'
 
-    await supabase.from('users').upsert(
-      {
-        id: user.id,
-        name,
-        phone: '',
-        role: roleToInsert,
-        language: 'ar',
-        theme: 'light',
-      },
-      { onConflict: 'id', ignoreDuplicates: true }
-    )
-  }
+  // Use role from magic-link metadata; ignoreDuplicates protects existing rows (e.g. admins).
+  const metaRole = (user.user_metadata?.role as string | undefined) ?? roleHint
+  const roleToInsert = metaRole === 'artist' ? 'artist' : metaRole === 'admin' ? 'admin' : 'client'
+
+  await supabase.from('users').upsert(
+    { id: user.id, name, phone: '', role: roleToInsert, language: 'ar', theme: 'light' },
+    { onConflict: 'id', ignoreDuplicates: true }
+  )
 
   // Read actual DB role for routing
-  const { data: userData } = user
-    ? await supabase.from('users').select('role').eq('id', user.id).single()
-    : { data: null }
+  const { data: userData } = await supabase
+    .from('users').select('role').eq('id', user.id).single()
 
   const role = userData?.role as string | undefined
 
-  if (role === 'admin') {
-    return NextResponse.redirect(`${origin}/admin`)
-  }
+  if (role === 'admin') return redirect(`${origin}/admin`)
 
   if (role === 'artist') {
     const { data: profile } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', user!.id)
-      .maybeSingle()
-
-    return NextResponse.redirect(
-      profile ? `${origin}/artist/studio` : `${origin}/auth/artist/complete`
-    )
+      .from('artist_profiles').select('id').eq('user_id', user.id).maybeSingle()
+    return redirect(profile ? `${origin}/artist/studio` : `${origin}/auth/artist/complete`)
   }
 
-  return NextResponse.redirect(`${origin}/client/home`)
+  return redirect(`${origin}/client/home`)
 }

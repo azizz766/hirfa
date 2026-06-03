@@ -23,6 +23,7 @@ export default function ClientAuthPage() {
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback?role=client`,
           data: { name: name.trim(), role: 'client' },
+          shouldCreateUser: true,
         },
       })
       if (error) throw error
