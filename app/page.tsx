@@ -536,12 +536,6 @@ function LangPicker({ selected, onSelect, onConfirm }: LangPickerProps) {
               color: selected === 'ar' ? 'var(--accent)' : 'var(--ink-muted)',
               fontWeight: 500,
             }}>Arabic</span>
-            <span style={{
-              fontSize: 13,
-              color: selected === 'ar' ? 'var(--accent)' : 'var(--ink-muted)',
-              marginTop: 4,
-              fontWeight: 600,
-            }}>←</span>
           </button>
 
           {/* English card */}
@@ -572,12 +566,6 @@ function LangPicker({ selected, onSelect, onConfirm }: LangPickerProps) {
               color: selected === 'en' ? 'var(--accent)' : 'var(--ink-muted)',
               fontWeight: 500,
             }}>الإنجليزية</span>
-            <span style={{
-              fontSize: 13,
-              color: selected === 'en' ? 'var(--accent)' : 'var(--ink-muted)',
-              marginTop: 4,
-              fontWeight: 600,
-            }}>→</span>
           </button>
         </div>
 
