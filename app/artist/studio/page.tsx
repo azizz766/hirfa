@@ -109,6 +109,8 @@ export default function ArtistStudioPage() {
   const [svcDays, setSvcDays] = useState('')
   const [svcDesc, setSvcDesc] = useState('')
   const [savingService, setSavingService] = useState(false)
+  const [deletingServiceId, setDeletingServiceId] = useState('')
+  const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'active' | 'completed'>('all')
 
   // Bio editing
   const [editingBio, setEditingBio] = useState(false)
@@ -138,6 +140,7 @@ export default function ArtistStudioPage() {
         setBio(profile.bio ?? '')
         setCategories(profile.categories ?? [])
         setRating(profile.rating_avg ?? 0)
+        setLocationValue({ city: profile.city ?? '', countryName: '' })
 
         const [{ data: ordersData }, { data: servicesData }, { data: portfolioData }] = await Promise.all([
           supabase.from('orders').select('id, status, description, client_price, artist_price, currency, created_at, client_id').eq('artist_id', profile.id).order('created_at', { ascending: false }),
@@ -220,6 +223,7 @@ export default function ArtistStudioPage() {
   }
 
   async function removePortfolioItem(id: string) {
+    if (!confirm(lang === 'en' ? 'Remove this image?' : 'حذف هذه الصورة؟')) return
     try {
       await supabase.from('portfolio_items').delete().eq('id', id)
       setPortfolio(prev => prev.filter(p => p.id !== id))
@@ -260,11 +264,14 @@ export default function ArtistStudioPage() {
   }
 
   async function deleteService(id: string) {
+    if (!confirm(lang === 'en' ? 'Delete this service?' : 'حذف هذه الخدمة؟')) return
+    setDeletingServiceId(id)
     try {
       await supabase.from('services').delete().eq('id', id)
       setServices(prev => prev.filter(s => s.id !== id))
       toast.success(lang === 'en' ? 'Deleted' : 'تم الحذف')
     } catch { toast.error(t('general.error')) }
+    finally { setDeletingServiceId('') }
   }
 
   async function saveBio() {
@@ -296,6 +303,10 @@ export default function ArtistStudioPage() {
   const pendingOrders = orders.filter(o => o.status === 'pending')
   const activeOrders = orders.filter(o => ['accepted', 'in_progress'].includes(o.status))
   const conversationOrders = orders.filter(o => ['accepted', 'in_progress', 'completed'].includes(o.status))
+  const filteredOrders = orderFilter === 'pending'   ? pendingOrders
+                       : orderFilter === 'active'    ? activeOrders
+                       : orderFilter === 'completed' ? orders.filter(o => o.status === 'completed')
+                       : orders
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: 'var(--bg-page)', border: '1.5px solid var(--border)',
@@ -313,7 +324,13 @@ export default function ArtistStudioPage() {
     { key: 'settings',  icon: Settings,        label: lang === 'en' ? 'Settings' : 'الإعدادات' },
   ]
 
-  const CATS = ['خط عربي', 'رسم', 'فخار', 'كروشيه', 'نحت']
+  const CATS = [
+    { ar: 'خط عربي', en: 'Calligraphy' },
+    { ar: 'رسم',     en: 'Painting'    },
+    { ar: 'فخار',    en: 'Pottery'     },
+    { ar: 'كروشيه',  en: 'Crochet'     },
+    { ar: 'نحت',     en: 'Sculpture'   },
+  ]
 
   return (
     <div style={{ maxWidth: 430, margin: '0 auto', background: 'var(--bg-page)', minHeight: '100dvh', direction: lang === 'ar' ? 'rtl' : 'ltr', paddingBottom: 120 }}>
@@ -363,7 +380,7 @@ export default function ArtistStudioPage() {
               {[
                 { label: lang === 'en' ? 'Earnings' : 'الأرباح',  value: earnings.toLocaleString('en-US'), color: 'var(--warning)' },
                 { label: lang === 'en' ? 'Active'   : 'نشط',      value: activeOrders.length.toString(),   color: 'var(--info)' },
-                { label: lang === 'en' ? 'Rating'   : 'التقييم',  value: rating.toFixed(1),                color: 'var(--success)' },
+                { label: lang === 'en' ? 'Rating'   : 'التقييم',  value: rating > 0 ? rating.toFixed(1) : (lang === 'en' ? 'New' : 'جديد'), color: 'var(--success)' },
               ].map(({ label, value, color }) => (
                 <div key={label} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '12px 10px', textAlign: 'center' }}>
                   {loading
@@ -433,19 +450,39 @@ export default function ArtistStudioPage() {
         {/* ───────── ORDERS TAB ───────── */}
         {activeTab === 'orders' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)', margin: '0 0 4px' }}>
-              {lang === 'en' ? 'All Orders' : 'كل الطلبات'}
-              {!loading && <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}> ({orders.length})</span>}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-primary)', margin: 0 }}>
+                {lang === 'en' ? 'All Orders' : 'كل الطلبات'}
+                {!loading && <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 400 }}> ({filteredOrders.length})</span>}
+              </h3>
+            </div>
+
+            {/* Filter tabs */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+              {([
+                { key: 'all',       label: lang === 'en' ? 'All'       : 'الكل'     },
+                { key: 'pending',   label: lang === 'en' ? 'Pending'   : 'معلقة'    },
+                { key: 'active',    label: lang === 'en' ? 'Active'    : 'نشطة'     },
+                { key: 'completed', label: lang === 'en' ? 'Completed' : 'مكتملة'   },
+              ] as { key: typeof orderFilter; label: string }[]).map(f => (
+                <button key={f.key} onClick={() => setOrderFilter(f.key)} style={{ padding: '6px 14px', borderRadius: 'var(--radius-pill)', border: orderFilter === f.key ? 'none' : '1px solid var(--border)', background: orderFilter === f.key ? 'var(--accent)' : 'var(--bg-surface)', color: orderFilter === f.key ? '#fff' : 'var(--ink-secondary)', fontSize: 12, fontWeight: orderFilter === f.key ? 600 : 400, cursor: 'pointer', minHeight: 34, transition: 'all 0.15s' }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
             {loading ? (
               [0, 1, 2].map(i => <Skel key={i} h={110} r={14} />)
-            ) : orders.length === 0 ? (
+            ) : filteredOrders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '48px 16px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
                 <Package size={32} color="var(--border)" style={{ margin: '0 auto 12px', display: 'block' }} />
-                <p style={{ fontSize: 14, color: 'var(--ink-muted)', margin: 0 }}>{lang === 'en' ? 'No orders yet' : 'لا توجد طلبات بعد'}</p>
+                <p style={{ fontSize: 14, color: 'var(--ink-muted)', margin: 0 }}>
+                  {orderFilter === 'all'
+                    ? (lang === 'en' ? 'No orders yet' : 'لا توجد طلبات بعد')
+                    : (lang === 'en' ? 'No orders in this category' : 'لا توجد طلبات في هذه الفئة')}
+                </p>
               </div>
-            ) : orders.map(o => (
+            ) : filteredOrders.map(o => (
               <div key={o.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: STATUS_BG[o.status] ?? 'var(--border)', color: STATUS_COLOR[o.status] ?? 'var(--ink-muted)' }}>
@@ -456,7 +493,7 @@ export default function ArtistStudioPage() {
                 <p style={{ fontSize: 13, color: 'var(--ink-secondary)', margin: '0 0 8px', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.5 }}>{o.description}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 11, color: 'var(--ink-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={11} /> {new Date(o.created_at).toLocaleDateString('en-US')}
+                    <Clock size={11} /> {new Date(o.created_at).toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US')}
                   </span>
                   {o.artist_price != null
                     ? <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--accent)' }}>{o.artist_price.toLocaleString('en-US')} {o.currency}</span>
@@ -511,7 +548,7 @@ export default function ArtistStudioPage() {
                     <img src={item.image_url} alt={item.title ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <button
                       onClick={() => removePortfolioItem(item.id)}
-                      style={{ position: 'absolute', top: 4, left: 4, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                      style={{ position: 'absolute', top: 4, ...(lang === 'ar' ? { right: 4 } : { left: 4 }), width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                     >
                       <X size={13} color="#fff" />
                     </button>
@@ -674,10 +711,10 @@ export default function ArtistStudioPage() {
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-primary)', margin: '0 0 12px', textAlign: lang === 'ar' ? 'right' : 'left' }}>{lang === 'en' ? 'Specializations' : 'التخصصات'}</h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {CATS.map(cat => {
-                  const active = categories.includes(cat)
+                  const active = categories.includes(cat.ar)
                   return (
-                    <button key={cat} onClick={() => toggleCategory(cat)} style={{ padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: active ? 'none' : '1px solid var(--border)', background: active ? 'var(--accent)' : 'var(--bg-page)', color: active ? '#fff' : 'var(--ink-secondary)', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s', minHeight: 40 }}>
-                      {cat}
+                    <button key={cat.ar} onClick={() => toggleCategory(cat.ar)} style={{ padding: '9px 16px', borderRadius: 'var(--radius-pill)', border: active ? 'none' : '1px solid var(--border)', background: active ? 'var(--accent)' : 'var(--bg-page)', color: active ? '#fff' : 'var(--ink-secondary)', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', transition: 'all 0.15s', minHeight: 40 }}>
+                      {lang === 'ar' ? cat.ar : cat.en}
                     </button>
                   )
                 })}
@@ -707,7 +744,8 @@ export default function ArtistStudioPage() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             onClick={() => deleteService(svc.id)}
-                            style={{ background: 'var(--danger-bg)', border: 'none', borderRadius: 8, padding: '8px 10px', cursor: 'pointer', color: 'var(--danger)', minHeight: 36, display: 'flex', alignItems: 'center' }}
+                            disabled={deletingServiceId === svc.id}
+                            style={{ background: 'var(--danger-bg)', border: 'none', borderRadius: 8, padding: '8px 10px', cursor: deletingServiceId === svc.id ? 'not-allowed' : 'pointer', color: 'var(--danger)', minHeight: 36, display: 'flex', alignItems: 'center', opacity: deletingServiceId === svc.id ? 0.4 : 1 }}
                           >
                             <Trash2 size={13} />
                           </button>
@@ -799,7 +837,7 @@ export default function ArtistStudioPage() {
       {showServiceForm && (
         <>
           <div onClick={() => setShowServiceForm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }} />
-          <div className="hirfa-slideup" style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: 'var(--bg-surface)', borderRadius: '20px 20px 0 0', zIndex: 41, direction: lang === 'ar' ? 'rtl' : 'ltr', paddingBottom: 36 }}>
+          <div className="hirfa-slideup" style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 430, background: 'var(--bg-surface)', borderRadius: '20px 20px 0 0', zIndex: 41, direction: lang === 'ar' ? 'rtl' : 'ltr', paddingBottom: 36, overflowY: 'auto', maxHeight: '85vh' }}>
             <div style={{ padding: '16px 20px 12px' }}>
               <div style={{ width: 36, height: 4, background: 'var(--border)', borderRadius: 2, margin: '0 auto 16px' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
