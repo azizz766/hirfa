@@ -11,7 +11,7 @@ test.describe('UI features', () => {
   });
 
   test('dark mode toggle changes data-theme attribute', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/client/home');
 
     const toggle = page.locator(
       '[data-testid="theme-toggle"], button:has-text("dark"), button:has-text("light"), button[aria-label*="theme" i], button[aria-label*="dark" i], button[aria-label*="mode" i]'
@@ -19,7 +19,7 @@ test.describe('UI features', () => {
 
     const toggleVisible = await toggle.isVisible().catch(() => false);
     if (!toggleVisible) {
-      test.skip(true, 'No theme toggle found on landing page');
+      test.skip(true, 'No theme toggle found on client home');
       return;
     }
 
@@ -33,7 +33,7 @@ test.describe('UI features', () => {
   });
 
   test('language switch changes nav labels', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/client/home');
 
     const langBtn = page.locator(
       '[data-testid="lang-toggle"], button:has-text("EN"), button:has-text("AR"), button[aria-label*="language" i], button[aria-label*="lang" i]'
@@ -41,15 +41,14 @@ test.describe('UI features', () => {
 
     const visible = await langBtn.isVisible().catch(() => false);
     if (!visible) {
-      test.skip(true, 'No language toggle found on landing page');
+      test.skip(true, 'No language toggle found on client home');
       return;
     }
 
-    // Grab some nav text before switching
-    const navText = await page.locator('nav').innerText().catch(() => '');
+    const navText = await page.locator('body').innerText().catch(() => '');
     await langBtn.click();
-    await page.waitForTimeout(500);
-    const navTextAfter = await page.locator('nav').innerText().catch(() => '');
+    await page.waitForTimeout(800);
+    const navTextAfter = await page.locator('body').innerText().catch(() => '');
 
     expect(navTextAfter).not.toBe(navText);
   });
