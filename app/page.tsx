@@ -28,18 +28,7 @@ export default function LandingPage() {
     setShowLangPicker(!saved)
   }, [])
 
-  function confirmLang() {
-    setLang(pickerLang)
-    setShowLangPicker(false)
-  }
-
-  // Render nothing until localStorage has been checked (avoids flash)
-  if (showLangPicker === null) return null
-
-  if (showLangPicker) {
-    return <LangPicker selected={pickerLang} onSelect={setPickerLang} onConfirm={confirmLang} />
-  }
-
+  // Must be before any conditional return — Rules of Hooks
   useEffect(() => {
     const id = setInterval(() => {
       setCraftVisible(false)
@@ -50,6 +39,21 @@ export default function LandingPage() {
     }, 2800)
     return () => clearInterval(id)
   }, [])
+
+  function handleContinue() {
+    try {
+      localStorage.setItem('hirfa_lang', pickerLang)
+    } catch {}
+    setLang(pickerLang as 'ar' | 'en')
+    setShowLangPicker(false)
+  }
+
+  // Render nothing until localStorage has been checked (avoids flash)
+  if (showLangPicker === null) return null
+
+  if (showLangPicker) {
+    return <LangPicker selected={pickerLang} onSelect={setPickerLang} onConfirm={handleContinue} />
+  }
 
   return (
     <>
